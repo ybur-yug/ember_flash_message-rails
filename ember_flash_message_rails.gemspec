@@ -20,9 +20,11 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake"
-  gem.add_development_dependency "coffee-rails"
-  gem.add_development_dependency "ember-rails"
-  gem.add_development_dependency "rails"
+  gem.add_dependency "coffee-rails"
+  gem.add_dependency "ember-rails"
+  gem.add_dependency "rails"
   gem.add_dependency "railties", "~> 3.1"
-
+  gem.add_dependency "rake-pipeline", git: "https://github.com/livingsocial/rake-pipeline.git"
+  gem.add_dependency "rack", "~> 1.5.2"
+  gem.add_dependency "qunit-rails"
 end
