@@ -5,12 +5,16 @@ transition, similiar to Rails' ``flash[:notice]``. This is useful for
 displaying one time notices on later pages.
 
 ## Usage
+Include 
 
-You should include
-[ember-flash-message.js](https://raw.github.com/ryanto/ember-flash-message/master/flash-message.js) on your page. Since this
-plugin depends on Ember.js you will have to include Ember first. Now any
-of your route's will have access to ``flashMessage(message)``, which
-will set the message.
+    gem 'ember_flash_message-rails'
+        
+in your gemfile, and then also include
+    
+    //= require_tree ./ember_flash_message
+    
+In your app/javascripts/app_name.js.coffee file. 
+Proceed to run bundle and it is ready to go
 
 ### Template
 
@@ -23,23 +27,19 @@ template to have the message be available on all pages.
   {{message}}
 {{/flashMessage}}
 ```
-
 ### Route
 
-Any route can call ``this.flashMessage(message)`` to set the message.
+Any route can call ``@flashMessage(message)`` to set the message.
 The message will be displayed after the next transition. After the
 router transitions for a second time the message will be destroyed.
 
-```javascript
-Ember.LoginRoute = Ember.Route.extend({
-  actions: {
-    login: function() {
+```CoffeeScript
+Ember.LoginRoute = Ember.Route.extend
+  actions:
+    login: -> 
       // login user ...
-      this.flashMessage('Welcome back!');
-      this.transitionTo('index');
-    }
-  }
-});
+      @flashMessage 'Welcome back!'
+      @transitionTo 'index'
 ```
 
 #### Instant Message
@@ -48,29 +48,23 @@ There may be some instances where you want to display the message right
 away and not wait for the route to transition. You can use the ``now()``
 function to update the message.
 
-```javascript
-Ember.ProfileRoute = Ember.Route.extend({
-  actions: {
-    save: function(profile) {
-      var router = this;
-
-      profile.save().then(function() {
-        router.flashMessage('Your profile has been updated!').now();
-      });
-    }
-  }
-});
-```   
-
-## Development
-
-This plugin is built with rake pipeline, which requires Ruby. To get
-started:
-
+```CoffeeScript
+Ember.ProfileRoute = Ember.Route.extend
+  actions:
+    save: -> profile
+      profile.save().then(->
+        @flashMessage 'Your profile has been updated!'.now()
 ```
-bundle install
-rackup
-```
+To make an instant message disappear, on a .then() catch after running it do as follows: 
 
-Edit code and visit [http://localhost:9292](http://localhost:9292) to
-run tests.
+    Ember.run.later(@, ->
+      @flashMessage(message: ""
+      , timeUntilItShouldDisappearInMilliseconds))
+
+### Styling
+Simply assign a class to wrap where it is being called and the message can easily be styled to display however you please. 
+
+### Todos
+
+- Implement a means to simply allow multiple classes for failure/success/whatever messages
+- Implement a custom timer for the .now() functionality to allow it to disappear at varying times on instantiation rather than being hard-coded
