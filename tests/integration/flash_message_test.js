@@ -1,123 +1,82 @@
-var App = Ember.Application.create({
-  rootElement: '#qunit-fixture'
-});
+App = Ember.Application.create rootElement: "#qunit-fixture"
+App.Router.map ->
+  @route "page1"
+  @route "page2"
+  @route "promise"
+  
 
-App.Router.map(function() {
-  this.route('page1');
-  this.route('page2');
-  this.route('promise');
-});
+App.PromiseRoute = Ember.Route.extend(model: ->
+  new Ember.RSVP.Promise((resolve) ->
+    Ember.run.later(->
+      resolve()  
+      , 100)
+)
+App.LoadingRoute = Ember.Route.extend()
+Ember.TEMPLATES.application = Ember.Handlebars.compile("{{#flashMessage}}<span class=\"message\">{{message}}</span>{{/flashMessage}}")
+findMessage = ->
+  $ "#qunit-fixture .message"
 
-App.PromiseRoute = Ember.Route.extend({
-  model: function() {
-    return new Ember.RSVP.Promise(function(resolve) {
-      Ember.run.later(function() {
-        resolve();
-      }, 100);
-    });
-  }
-});
+messageExists = ->
+  findMessage().length > 0
 
-App.LoadingRoute = Ember.Route.extend();
+assertMessage = ->
+  ok messageExists()
 
-Ember.TEMPLATES.application = Ember.Handlebars.compile('{{#flashMessage}}<span class="message">{{message}}</span>{{/flashMessage}}');
+assertNoMessage = ->
+  ok not messageExists()
 
-var findMessage = function() {
-  return $('#qunit-fixture .message');
-};
+router = ->
+  App.__container__.lookup "route:application"
 
-var messageExists = function() {
-  return findMessage().length > 0;
-};
+App.setupForTesting()
+module "Integration App Test",
+  setup: ->
+    App.reset()
+    App.injectTestHelpers()
 
-var assertMessage = function() {
-  return ok(messageExists());
-};
+test "should not see the flash if there is no message", ->
+  visit "/"
+  andThen assertNoMessage
 
-var assertNoMessage = function() {
-  return ok(!messageExists());
-};
+test "should not see the flash message if there has not been a transition", ->
+  visit "/"
+  andThen ->
+    router().flashMessage "hello world"
 
-var router = function() {
-  return App.__container__.lookup('route:application');
-};
+  andThen assertNoMessage
 
-App.setupForTesting();
+test "should see a flash message when I transition to the next route", ->
+  expect 2
+  visit "/"
+  andThen ->
+    router().flashMessage "hello world"
 
-module("Integration App Test", {
-  setup: function() {
-    App.reset();
-    App.injectTestHelpers();
-  }
-});
+  visit "/page1"
+  andThen assertMessage
+  andThen ->
+    equal findMessage().text().trim(), "hello world"
 
-test("should not see the flash if there is no message", function() {
-  visit("/");
-  andThen(assertNoMessage);
-});
+test "should not see a flash message once it has been displayed", ->
+  visit "/"
+  andThen ->
+    router().flashMessage "test"
 
-test("should not see the flash message if there has not been a transition", function() {
-  visit("/");
+  visit "/page1"
+  andThen assertMessage
+  visit "/page2"
+  andThen assertNoMessage
 
-  andThen(function() {
-    router().flashMessage('hello world');
-  });
+test "should not display or destroy the flash message when in the loading route", ->
+  visit "/"
+  andThen ->
+    router().flashMessage "test"
 
-  andThen(assertNoMessage);
-});
+  visit "/promise"
+  andThen assertMessage
 
-test("should see a flash message when I transition to the next route", function() {
-  expect(2);
+test "should display the flash message instantly", ->
+  visit "/"
+  andThen ->
+    router().flashMessage("instant message").now()
 
-  visit("/");
-
-  andThen(function() {
-    router().flashMessage('hello world');
-  });
-
-  visit("/page1");
-
-  andThen(assertMessage);
-
-  andThen(function() {
-    equal(findMessage().text().trim(), 'hello world');
-  });
-});
-
-test("should not see a flash message once it has been displayed", function() {
-  visit("/");
-
-  andThen(function() {
-    router().flashMessage('test');
-  });
-
-  visit("/page1");
-
-  andThen(assertMessage);
-
-  visit("/page2");
-
-  andThen(assertNoMessage);
-});
-
-test("should not display or destroy the flash message when in the loading route", function() {
-  visit("/");
-
-  andThen(function() {
-    router().flashMessage('test');
-  });
-
-  visit("/promise");
-
-  andThen(assertMessage);
-});
-
-test("should display the flash message instantly", function() {
-  visit("/");
-
-  andThen(function() {
-    router().flashMessage('instant message').now();
-  });
-
-  andThen(assertMessage);
-});
+  andThen assertMessage
