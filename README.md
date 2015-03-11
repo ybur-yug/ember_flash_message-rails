@@ -1,3 +1,5 @@
+# NOTE: This is no longer maintained and uses a deprecated version of Ember.js
+
 # Ember Flash Message
 
 A simple plugin that allows you to display a message on the next route
